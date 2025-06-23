@@ -24,13 +24,14 @@ class PlayManager {
 
       currentSong = playQueue.first;
       playQueue.removeAt(0);
-      screen.showPlaying(currentSong);
+      
+      changeCurrentSong(currentSong!);
 
-      currentSong!.waitPlay();
-
-      while (currentSong?.open ?? false) {
+      while ((currentSong?.elapsedEstimate ?? double.infinity) < (currentSong?.metaData.duration?.inSeconds ?? 0)) {
         await Future.delayed(const Duration(seconds: 1));
       }
+
+      await Future.delayed(const Duration(seconds: 1));
     }
   }
 

@@ -9,6 +9,7 @@ class Screen {
   final String resetStyle = Ansi.construct([Effect.reset]);
   final String printItem = '  ';
   List<List<String>> screen = [];
+  MP3? currentSong;
   
   List<String> border = [
     Ansi.construct([Colour.backgroundPurple]),
@@ -17,6 +18,10 @@ class Screen {
   ];
   
   int innerSpace = 0;
+
+  Screen() {
+    _startShowPlaying();
+  }
 
   void startUp() {
     terminal.hideCursor();
@@ -57,7 +62,27 @@ class Screen {
       screen.add(row);
     }
 
-    List<String> titleScreenRaw = File('title screen.txt').readAsLinesSync();
+    List<String> titleScreenRaw = [
+      '.------------------------------------------------------------.',
+      '|                                                            |',
+      '|  ___      ___  ____  ____    ________    __       ______   |',
+      '| |"  \\    /"  |("  _||_ " |  /"       )  |" \\     /" _  "\\  |',
+      '|  \\   \\  //   ||   (  ) : | (:   \\___/   ||  |   (: ( \\___) |',
+      '|  /\\\\  \\/.    |(:  |  | . )  \\___  \\     |:  |    \\/ \\      |',
+      '| |: \\.        | \\\\ \\__/ //    __/  \\\\    |.  |    //  \\ _   |',
+      '| |.  \\    /:  | /\\\\ __ //\\   /" \\   :)   /\\  |\\  (:   _) \\  |',
+      '| |___|\\__/|___|(__________) (_______/   (__\\_|_)  \\_______) |',
+      '|                                                            |',
+      '|       __         _______      _______                      |',
+      '|      /""\\       |   __ "\\    |   __ "\\                     |',
+      '|     /    \\      (. |__) :)   (. |__) :)                    |',
+      '|    /\' /\\  \\     |:  ____/    |:  ____/                     |',
+      '|   //  __\'  \\    (|  /        (|  /                         |',
+      '|  /   /  \\\\  \\  /|__/ \\      /|__/ \\                        |',
+      '| (___/    \\___)(_______)    (_______)                       |',
+      '|                                                            |',
+      '\'------------------------------------------------------------\'',
+    ];
 
     drawBorder();
     
@@ -101,11 +126,11 @@ class Screen {
       'del, esc: back'
     ]);
 
-    showPlaying(song);
-
     showPlayControls();
 
     showTitle(title ?? '');
+
+    _showPlayState();
   }
 
   void spiralTraverseAndApply<T>(
@@ -207,10 +232,33 @@ class Screen {
   }
 
   void showPlaying([MP3? song]) {
+    currentSong = song;
+  }
+
+  void _showPlayState() async {
+    const int lenOfPlayBar = 15;
+    
     _printInBorder(
       Text(
         (
-          song != null ? '${song.metaData.title ?? ''} - ${song.metaData.artist ?? ''}' : '<no song playing>'
+          currentSong != null ? [
+            [
+              currentSong!.metaData.title ?? '',
+              '-',
+              currentSong!.metaData.artist ?? '',
+            ].join(' '),
+            [
+              currentSong!.playing ? '' : Ansi.construct([Effect.slowBlink]),
+              '[',
+              List.generate(
+                lenOfPlayBar,
+                (i) => (currentSong!.elapsedEstimate * lenOfPlayBar / currentSong!.metaData.duration!.inSeconds) >= i ? '#' : ' '
+              ).join(),
+              ']',
+              currentSong!.playing ? '' : Ansi.construct([Effect.blinkOff])
+            ].join()
+          ].join('  ')
+          : '<no song playing>'
         ),
         terminal.width - 2,
         1,
@@ -220,6 +268,14 @@ class Screen {
       3,
       false,
     );
+  }
+
+  void _startShowPlaying() async {
+    while (true) {
+      _showPlayState();
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
   }
 
   void showPlayControls() {

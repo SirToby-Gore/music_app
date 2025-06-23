@@ -12,7 +12,7 @@ class MP3 {
   bool playing = false;
   bool open = false;
   bool muted = false;
-  bool finished = false;
+  int elapsedEstimate = 0;
 
   AudioMetadata metaData = AudioMetadata(file: File(''));
   
@@ -33,13 +33,23 @@ class MP3 {
         '-nodisp',
         '-autoexit',
         '-hide_banner',
-        '-loglevel', 'quiet', 
+        '-loglevel',
+        'quiet', 
         file.path,
       ],
     );
 
     open = true;
     playing = true;
+    elapsedEstimate = 0;
+
+    while (elapsedEstimate < (metaData.duration?.inSeconds ?? 0)) {
+      if (playing) {
+        elapsedEstimate++;
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
 
     return MP3StatusCode.success;
   }
@@ -85,8 +95,8 @@ class MP3 {
     return MP3StatusCode.success;
   }
 
-  Future<MP3StatusCode> resume() async {
-    if (!open) {
+ Future<MP3StatusCode> resume() async {
+     if (!open) {
       return MP3StatusCode.failure;
     }
     
@@ -103,82 +113,6 @@ class MP3 {
     );
 
     playing = true;
-    
-    return MP3StatusCode.success;
-  }
-
-  Future<MP3StatusCode> fastForward() async {
-    if (!open) {
-      return MP3StatusCode.failure;
-    }
-    
-    await Process.start(
-      'pkill',
-      [
-        '-USR1',
-        'ffplay'
-      ]
-    );
-
-    return MP3StatusCode.success;
-  }
-
-  Future<MP3StatusCode> rewind() async {
-    if (!open) {
-      return MP3StatusCode.failure;
-    }
-    
-    await Process.start(
-      'pkill',
-      [
-        '-USR2',
-        'ffplay'
-      ]
-    );
-
-    return MP3StatusCode.success;
-  }
-
-  Future<MP3StatusCode> mute() async {
-    if (!open) {
-      return MP3StatusCode.failure;
-    }
-
-    if (muted) {
-      return MP3StatusCode.warning;
-    }
-    
-    await Process.start(
-      'pkill',
-      [
-        '-USR3',
-        'ffplay'
-      ]
-    );
-
-    muted = true;
-    
-    return MP3StatusCode.success;
-  }
-
-  Future<MP3StatusCode> unmute() async {
-    if (!open) {
-      return MP3StatusCode.failure;
-    }
-
-    if (!muted) {
-      return MP3StatusCode.warning;
-    }
-    
-    await Process.start(
-      'pkill',
-      [
-        '-USR3',
-        'ffplay'
-      ]
-    );
-    
-    muted = false;
     
     return MP3StatusCode.success;
   }
@@ -212,12 +146,10 @@ class MP3 {
         file.path,
       ],
     );
-
-    int timeLeft = metaData.duration?.inSeconds ?? 0;
-
-    while (timeLeft > 0) {
+    
+    while (elapsedEstimate < (metaData.duration?.inSeconds ?? 0)) {
       if (playing) {
-        timeLeft--;
+        elapsedEstimate++;
       }
 
       await Future.delayed(const Duration(seconds: 1));

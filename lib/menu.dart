@@ -274,7 +274,7 @@ class Menu {
 
           if (playManager!.playQueue.length > 1) {
             playManager?.currentSong?.stop();
-            playManager!.playQueue.removeAt(0);
+            // playManager!.playQueue.removeAt(0);
             playManager!.startPlayQueue();
           }
 
@@ -284,7 +284,7 @@ class Menu {
           playManager?.currentSong?.restart();
           screen.showPlaying(playManager?.currentSong);
           break;
-        
+          
         default:
           break;
       }
@@ -640,7 +640,19 @@ class Menu {
     subscription = null;
 
     try {
-      final List<String> goodbyeLines = await File('goodbye.txt').readAsLines();
+      final List<String> goodbyeLines = [
+        '.----------------------------------------------------------------------------.',
+        '|                                                                            |',
+        '|   _______     ______      ______    ________   _______  ___  ___  _______  |',
+        '|  /" _   "|   /    " \\    /    " \\  |"      "\\ |   _  "\\|"  \\/"  |/"     "| |',
+        '| (: ( \\___)  // ____  \\  // ____  \\ (.  ___  :)(. |_)  :)\\   \\  /(: ______) |',
+        '|  \\/ \\      /  /    ) :)/  /    ) :)|: \\   ) |||:     \\/  \\\\  \\/  \\/    |   |',
+        '|  //  \\ ___(: (____/ //(: (____/ // (| (___\\ ||(|  _  \\\\  /   /   // ___)_  |',
+        '| (:   _(  _|\\        /  \\        /  |:       :)|: |_)  :)/   /   (:      "| |',
+        '|  \\_______)  \\"_____/    \\"_____/   (________/ (_______/|___/     \\_______) |',
+        '|                                                                            |',
+        '\'----------------------------------------------------------------------------\'',
+      ];
       screen.writeTextFromCorner(Text(
         goodbyeLines,
         screen.terminal.width - (screen.border.length * 2 * screen.printItem.length),

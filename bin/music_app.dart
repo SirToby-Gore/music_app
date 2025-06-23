@@ -206,7 +206,6 @@ Map<String, Function> getAlbumOptions(MusicApp app) {
   );
 } 
 
-
 Map<String, Function> getRootOptions(MusicApp app) {
   return sortMap(
     {
@@ -238,10 +237,9 @@ Map<String, Function> getRootOptions(MusicApp app) {
   );
 }
 
-
 void main(List<String> arguments) {
   int maxItems = () {
-    int height = MusicApp.screen.terminal.height - 16;
+    int height = MusicApp.screen.terminal.height - 20;
 
     if (height.isEven) {
       return height + 1;
