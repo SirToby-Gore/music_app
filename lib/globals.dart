@@ -8,4 +8,4 @@ String userHomeDir = () {
   }
 }();
 
-bool menu = false;
+bool menuInitialised = false;

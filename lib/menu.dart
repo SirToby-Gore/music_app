@@ -1,3 +1,4 @@
+import 'package:music_app/settings.dart';
 import 'package:rich_stdout/rich_stdout.dart';
 import 'package:music_app/screen.dart';
 import 'package:music_app/text.dart';
@@ -147,11 +148,11 @@ class Menu {
   final List<bool> _endListenerOnSelection = [true];
 
   Menu(this.width, this.height, this.screen, {this.debug = false}) {
-    if (globals.menu) {
+    if (globals.menuInitialised) {
       screen.terminal.error('Menu object already initialised');
       throw Error();
     } else {
-      globals.menu = true;
+      globals.menuInitialised = true;
     }
 
     if (stdin.hasTerminal) {
@@ -161,13 +162,13 @@ class Menu {
       screen.terminal.error('Application requires an interactive terminal.');
       exit(1);
     }
+
     
     subscription = stdin.listen((List<int> data) {
       Character character = getCharFromCode(data);
 
       if (debug) {
-        screen.writeTextFromCorner(Text('$data: $character', screen.terminal.width, screen.terminal.height));
-        sleep(Duration(milliseconds: 500));
+        screen.showDebug('$data: $character');
       }
 
       // handle user input
@@ -322,66 +323,102 @@ class Menu {
 
   void showCurrentMenu() {
     if (_numberOfItemsToShow.last.isEven) {
-      print('number of items to show must be odd ${_numberOfItemsToShow.last} is even');
+      screen.terminal.error('number of items to show must be odd ${_numberOfItemsToShow.last} is even');
       exit(1);
     }
     
-    int innerWidth = screen.terminal.width - (screen.border.length * 2 * screen.printItem.length);
-    int innerHeight = screen.terminal.height - (screen.border.length * 2);
-
-    if (_numberOfItemsToShow.last > innerHeight) {
-      screen.terminal.error('number of items to show is too many, must be within the max number lines of $innerHeight');
+    if (_numberOfItemsToShow.last > screen.innerHeight) {
+      screen.terminal.error('number of items to show is too many, must be within the max number lines of ${screen.innerHeight}');
     }
 
-    int midWayItem = _numberOfItemsToShow.last ~/ 2;
+    int midWayItem = (_numberOfItemsToShow.last ~/ 2) + 1;
 
-    List<String> rows = List.generate(
-      _numberOfItemsToShow.last,
-      (index) => [
-        screen.printItem * _indentOnItems.last,
-        getAtIndexOrNull(
-          _options.last.keys,
-          index + _currentlySelected.last - midWayItem
-        ) ?? ''
-      ].join()
+    Paragraph rows = Paragraph(
+      List.generate(
+        _numberOfItemsToShow.last,
+        (index) => () {
+          return MaxLineRight(
+            [
+              Text(' ' * _indentOnItems.last),
+              Text(
+                getAtIndexOrNull(
+                  _options.last.keys,
+                  index + _currentlySelected.last - midWayItem
+                ) ?? ''
+              ),
+            ],
+            screen.innerWidth,
+            beginningString: '│',
+            endingString: '│',
+          );
+        }(),
+      ),
+      screen.innerHeight
     );
 
-    rows[midWayItem] = [
-      screen.printItem * _indentOnItems.last,
-      screen.printItem * _extraIndentOnSelected.last,
-      [
-        '>',
-        Ansi.construct([Colour.backgroundWhite, Colour.foregroundBlack]),
-        rows[midWayItem].trim(),
-        Ansi.construct([Effect.reset])
-      ].join(' ')
-    ].join();
-
-    if (_title.last != null) {
-      rows.insert(
-        0,
+    rows.lines.insert(
+      0,
+      Line(
         [
-          screen.printItem * _titleSpace.last,
-          Ansi.construct([Effect.underlined, Effect.bold]),
-          _title.last,
-          Ansi.construct([Effect.reset]),
-        ].join()
-      );
-
-      for (var i = 0; i < _titleSpace.last; i++) {
-        rows
-          ..insert(1, '')
-          ..insert(0, '');
-      }
-    }
-    
-    screen.writeTextFromCorner(
-      Text(
-        rows,
-        innerWidth,
-        innerHeight,
+          Text('┌${'─' * (screen.innerWidth - 2)}┐')
+        ],
+        screen.innerWidth
       )
     );
+    rows.lines.add(Line(
+      [
+        Text('└${'─' * (screen.innerWidth - 2)}┘')
+      ],
+      screen.innerWidth
+    ));
+
+    rows.lines[midWayItem + 1] = MaxLineRight(
+      [
+        Text('━' * ((_indentOnItems.last + _extraIndentOnSelected.last) - 1)),
+        Style([Colour.backgroundWhite, Colour.foregroundBlack]),
+        Text(
+          getAtIndexOrNull(
+            _options.last.keys,
+            _currentlySelected.last
+          ) ?? '<no item found at pos $midWayItem from ${_options.last.keys}>',
+          whitespaceLeft: 1,
+          whitespaceRight: 1
+        ),
+        ResetStyle(),
+      ],
+      screen.innerWidth,
+      beginningString: '┝',
+      endingString: '│',
+    );
+
+    if (_title.last != null) {
+      screen.showDebug('adding white space and title...');
+      
+      rows.lines.insert(
+        0,
+        MaxLineRight(
+          [
+            Text(' ' * (_titleSpace.last)),
+            Style([Effect.underlined, Effect.bold]),
+            Text(_title.last ?? ''),
+            Style([Effect.underlineOff, Effect.blinkOff]),
+          ],
+          screen.innerWidth
+        )
+      );
+
+      Line whiteSpace = MaxLineRight([Text('')], screen.innerWidth); 
+
+      for (var i = 0; i < _titleSpace.last; i++) {
+        rows.lines
+          ..insert(1, whiteSpace)
+          ..insert(0, whiteSpace);
+      }
+
+      screen.showDebug('added white space and title');
+    }
+
+    screen.writeTextFromCorner(rows);
   }
 
   String? getAtIndexOrNull(Iterable<String> list, int index){
@@ -634,38 +671,17 @@ class Menu {
     }
   }
 
-// Make the function asynchronous
   void exitMenu() async {
     subscription?.cancel();
     subscription = null;
 
-    try {
-      final List<String> goodbyeLines = [
-        '.----------------------------------------------------------------------------.',
-        '|                                                                            |',
-        '|   _______     ______      ______    ________   _______  ___  ___  _______  |',
-        '|  /" _   "|   /    " \\    /    " \\  |"      "\\ |   _  "\\|"  \\/"  |/"     "| |',
-        '| (: ( \\___)  // ____  \\  // ____  \\ (.  ___  :)(. |_)  :)\\   \\  /(: ______) |',
-        '|  \\/ \\      /  /    ) :)/  /    ) :)|: \\   ) |||:     \\/  \\\\  \\/  \\/    |   |',
-        '|  //  \\ ___(: (____/ //(: (____/ // (| (___\\ ||(|  _  \\\\  /   /   // ___)_  |',
-        '| (:   _(  _|\\        /  \\        /  |:       :)|: |_)  :)/   /   (:      "| |',
-        '|  \\_______)  \\"_____/    \\"_____/   (________/ (_______/|___/     \\_______) |',
-        '|                                                                            |',
-        '\'----------------------------------------------------------------------------\'',
-      ];
-      screen.writeTextFromCorner(Text(
-        goodbyeLines,
-        screen.terminal.width - (screen.border.length * 2 * screen.printItem.length),
-        screen.terminal.height - (screen.border.length * 2)
-      ));
-    } catch (e) {
-      print('Error reading goodbye.txt: $e');
-      screen.writeTextFromCorner(Text(
-        'Goodbye!',
-        screen.terminal.width - (screen.border.length * 2 * screen.printItem.length),
-        screen.terminal.height - (screen.border.length * 2)
-      ));
-    }
+    final List<Line> goodbyeLines = Settings.exitText.map(
+      (line) => CenterLine([Text(line)], screen.innerWidth)
+    ).toList();
+    screen.writeTextFromCorner(CenterParagraph(
+      goodbyeLines,
+      screen.innerHeight
+    ));
 
     await Future.delayed(Duration(seconds: 1));
 
@@ -681,12 +697,16 @@ class Menu {
         stdin
           ..echoMode = true
           ..lineMode = true;
-        if (debug) print('Terminal modes restored: echoMode=${stdin.echoMode}, lineMode=${stdin.lineMode}');
+        if (debug) {
+          print('Terminal modes restored: echoMode=${stdin.echoMode}, lineMode=${stdin.lineMode}');
+        }
       } catch (e) {
         print('Error restoring terminal modes: $e');
       }
     } else {
-      if (debug) print('Cannot restore terminal modes: stdin no longer has a terminal.');
+      if (debug) {
+        print('Cannot restore terminal modes: stdin no longer has a terminal.');
+      }
     }
     
     exit(0);

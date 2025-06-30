@@ -43,7 +43,7 @@ class MusicFolder {
       }
     }
 
-    return songs..sort(
+    return songs.toList()..sort(
       (song1, song2) => (song1.metaData.title ?? '<Unknown>').compareTo(song2.metaData.title ?? '<Unknown>')
     );
   }
@@ -55,7 +55,7 @@ class MusicFolder {
       albums.addAll(artist.albums);
     }
 
-    return albums..sort(
+    return albums.toList()..sort(
       (album1, album2) => album1.artist.compareTo(album2.artist) == 0
         ? album1.name.compareTo(album2.name)
         : album1.artist.compareTo(album2.artist)
@@ -86,6 +86,14 @@ class Album {
 
   Album(String path, this.artist) {
     name = path.split('/').last;
-    songs = Directory(path).listSync().whereType<File>().where((file) => file.path.endsWith('.mp3')).map((mp3) => MP3(mp3.path)).toList();
+    songs = Directory(
+      path
+    ).listSync(
+    ).whereType<File>(
+    ).where(
+      (file) => file.path.endsWith('.mp3')
+    ).map(
+      (mp3) => MP3(mp3.path)
+    ).toList();
   }
 }

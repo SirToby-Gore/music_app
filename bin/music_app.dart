@@ -239,7 +239,7 @@ Map<String, Function> getRootOptions(MusicApp app) {
 
 void main(List<String> arguments) {
   int maxItems = () {
-    int height = MusicApp.screen.terminal.height - 20;
+    int height = MusicApp.screen.terminal.height - (MusicApp.screen.borderHeight + 6);
 
     if (height.isEven) {
       return height + 1;
@@ -253,11 +253,11 @@ void main(List<String> arguments) {
     defaultNumberOfItemsToShow: maxItems,
   );
 
-  app
-    ..startUp()
-    ..listOptions(
-      getRootOptions(app),
-      title: 'Music app',
-    );
+  app.menu.screen.startUp();
+
+  app.listOptions(
+    getRootOptions(app),
+    title: 'Music app',
+  );
 }
 

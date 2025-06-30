@@ -1,25 +1,34 @@
 import 'package:music_app/text.dart';
 import 'package:rich_stdout/rich_stdout.dart';
 import 'package:music_app/mp3.dart';
+import 'package:music_app/settings.dart';
 import 'dart:math';
 import 'dart:io';
 
 class Screen {
   final Terminal terminal = Terminal();
   final String resetStyle = Ansi.construct([Effect.reset]);
-  final String printItem = '  ';
+  final String printItem = Settings.borderPrintItem;
   List<List<String>> screen = [];
   MP3? currentSong;
+
+  int borderWidth = 0;
+  int borderHeight = 0;
+
+  int innerWidth = 0;
+  int innerHeight = 0;
   
-  List<String> border = [
-    Ansi.construct([Colour.backgroundPurple]),
-    Ansi.construct([Colour.backgroundBlue]),
-    Ansi.construct([Colour.backgroundLightBlue])
-  ];
+  Map<int, List<int>> border = Settings.borderBackgroundEffects;
   
   int innerSpace = 0;
 
   Screen() {
+    borderWidth = border.length * printItem.length * 2;
+    borderHeight = border.length * 2;
+
+    innerWidth = terminal.width - borderWidth;
+    innerHeight = terminal.height - borderHeight;
+
     _startShowPlaying();
   }
 
@@ -44,11 +53,11 @@ class Screen {
         for (int borderPointer = 0; borderPointer < border.length; borderPointer++) {
           if (
             rowNumber == borderPointer
-            || rowNumber == height - (borderPointer+1)
+            || rowNumber == height - (borderPointer + 1)
             || columnNumber == borderPointer
-            || columnNumber == printWidth - (borderPointer+1)
+            || columnNumber == printWidth - (borderPointer + 1)
           ) {
-            row.add('${border[borderPointer]}$printItem$resetStyle');
+            row.add('${Ansi.construct(border[borderPointer + 1]!)}$printItem$resetStyle');
             hasPrinted = true;
             break;
           }
@@ -62,45 +71,21 @@ class Screen {
       screen.add(row);
     }
 
-    List<String> titleScreenRaw = [
-      '.------------------------------------------------------------.',
-      '|                                                            |',
-      '|  ___      ___  ____  ____    ________    __       ______   |',
-      '| |"  \\    /"  |("  _||_ " |  /"       )  |" \\     /" _  "\\  |',
-      '|  \\   \\  //   ||   (  ) : | (:   \\___/   ||  |   (: ( \\___) |',
-      '|  /\\\\  \\/.    |(:  |  | . )  \\___  \\     |:  |    \\/ \\      |',
-      '| |: \\.        | \\\\ \\__/ //    __/  \\\\    |.  |    //  \\ _   |',
-      '| |.  \\    /:  | /\\\\ __ //\\   /" \\   :)   /\\  |\\  (:   _) \\  |',
-      '| |___|\\__/|___|(__________) (_______/   (__\\_|_)  \\_______) |',
-      '|                                                            |',
-      '|       __         _______      _______                      |',
-      '|      /""\\       |   __ "\\    |   __ "\\                     |',
-      '|     /    \\      (. |__) :)   (. |__) :)                    |',
-      '|    /\' /\\  \\     |:  ____/    |:  ____/                     |',
-      '|   //  __\'  \\    (|  /        (|  /                         |',
-      '|  /   /  \\\\  \\  /|__/ \\      /|__/ \\                        |',
-      '| (___/    \\___)(_______)    (_______)                       |',
-      '|                                                            |',
-      '\'------------------------------------------------------------\'',
-    ];
+    List<Line> titleScreenRaw = Settings.welcomeText.map(
+      (line) => CenterLine([Text(line)], innerWidth)
+    ).toList();
 
     drawBorder();
     
-    int innerWidth = width - (border.length * 2 * printItem.length);
-    int innerHeight = height - (border.length * 2 * printItem.length);
-
-    Text titleScreenText = CenterText(
+    Paragraph titleScreenText = CenterParagraph(
       titleScreenRaw,
-      innerWidth,
       innerHeight,
     );
 
     writeTextFromCorner(titleScreenText);
-
-    sleep(Duration(seconds: 2));
   }
 
-  void drawBorder({MP3? song, String? title, int startDelay = 6}) async {
+  void drawBorder({MP3? song, String? title, int startDelay = 6}) {
     if (startDelay > 0) {
       Random random = Random();
       int delay = startDelay;
@@ -111,6 +96,7 @@ class Screen {
         terminal.moveCursor(column * printItem.length + 1, row + 1);
         terminal.print(tile, newLine: false);
         sleep(Duration(milliseconds: delay));
+
         if (random.nextInt(50) > 48 && delay > 0) {
           delay--;
         }
@@ -133,6 +119,7 @@ class Screen {
     _showPlayState();
   }
 
+  /// this was vibe coded, know idea how it works, it just does
   void spiralTraverseAndApply<T>(
       List<List<T>> matrix,
       Function(T item, int row, int col) callback
@@ -183,48 +170,37 @@ class Screen {
       }
     }
 
-  void writeTextFromCorner(Text text) {
-    int width = terminal.width - (border.length * printItem.length * 2);
-    
-    List<List<String>> screen = List.generate(
-      terminal.height - (border.length * printItem.length * 2),
-      (_) => List.generate(
-        width,
-        (_) => ' '
-      )
-    );
+  void writeTextFromCorner(Paragraph text) {
+    final int cursorColumnStart = (borderWidth ~/ 2) + 1;
 
-    for (var i = 0; i < text.lines.length; i++) {
-      String line = text.lines[i];
-      
-      for (var ii = 0; ii < line.length; ii++) {
-        screen[i][ii] = line[ii];
-      }
-    }
-    
-    for (int linePointer = 0; linePointer < screen.length; linePointer++) {
+    for (int linePointer = 0; linePointer < innerHeight; linePointer++) {
       terminal.moveCursor(
-        (printItem.length * border.length) + 1,
-        border.length + linePointer + 1
+        cursorColumnStart,
+        border.length + linePointer + 1 
       );
 
-      String line = screen[linePointer].join();
-      
-      terminal.print(line, newLine: false);
+      terminal.print(' ' * innerWidth, newLine: false);
+
+      if (linePointer < text.lines.length) {
+        Line line = text.lines[linePointer];
+
+        terminal.moveCursor(
+          cursorColumnStart,
+          border.length + linePointer + 1
+        );
+
+        terminal.print(line.render(), newLine: false);
+      }
     }
 
-    terminal.moveCursor(terminal.width, terminal.height);
+    terminal.moveCursor(0, terminal.height); // moves the cursor to the bottom
   }
 
   void showCommands(List<String> commands) {
     _printInBorder(
-      Text(
-        commands.join(' ' * 5)
-        ,
-        terminal.width - 2,
-        1,
-        showEllipses: true,
-        lineWrap: false
+      CenterLine(
+        [Text(commands.join('  '))],
+        innerWidth
       ),
       1,
       false
@@ -236,35 +212,50 @@ class Screen {
   }
 
   void _showPlayState() async {
-    const int lenOfPlayBar = 15;
+    Line line = CenterLine([Text('<no song playing>')], innerWidth);
+
+    const int lengthOfPlayBar = 15;
+
+    if (currentSong != null) {
+      List<Text> playBar = [
+        Text('['),
+        Text(List.generate(
+          lengthOfPlayBar,
+          (i) => (
+            currentSong!.elapsedEstimate * lengthOfPlayBar / currentSong!.metaData.duration!.inSeconds
+          ) >= i
+          ? '#'
+          : ' '
+        ).join()),
+        Text(']'),
+      ];
+
+      if (!currentSong!.playing) {
+        playBar.insert(
+          0, 
+          Style([Effect.slowBlink])
+        );
+
+        playBar.add(
+          Style([Effect.blinkOff])
+        );
+      }
+
+      line = CenterLine(
+        [
+          Text([
+            currentSong!.metaData.title ?? '',
+            '-',
+            currentSong!.metaData.artist ?? '',
+          ].join(' ')),
+          ...playBar
+        ],
+        innerWidth
+      );
+    }
     
     _printInBorder(
-      Text(
-        (
-          currentSong != null ? [
-            [
-              currentSong!.metaData.title ?? '',
-              '-',
-              currentSong!.metaData.artist ?? '',
-            ].join(' '),
-            [
-              currentSong!.playing ? '' : Ansi.construct([Effect.slowBlink]),
-              '[',
-              List.generate(
-                lenOfPlayBar,
-                (i) => (currentSong!.elapsedEstimate * lenOfPlayBar / currentSong!.metaData.duration!.inSeconds) >= i ? '#' : ' '
-              ).join(),
-              ']',
-              currentSong!.playing ? '' : Ansi.construct([Effect.blinkOff])
-            ].join()
-          ].join('  ')
-          : '<no song playing>'
-        ),
-        terminal.width - 2,
-        1,
-        showEllipses: true,
-        lineWrap: false
-      ),
+      line,
       3,
       false,
     );
@@ -280,38 +271,41 @@ class Screen {
 
   void showPlayControls() {
     _printInBorder(
-      Text(
+      CenterLine(
         [
-          'space: play/pause',
-          'n: next',
-          'r: restart song',
-        ].join(' ' * 5),
-        terminal.width - printItem.length * 2,
-        1,
+          Text('space: play/pause  '),
+          Text('n: next  '),
+          Text('r: restart song'),
+        ],
+        innerWidth,
       ),
       2,
-      false
+      false,
     );
   }
 
   void showTitle(String title) {
     _printInBorder(
-      Text(
-        Ansi.construct([Effect.bold, Effect.underlined]) + title,
-        terminal.width - (printItem.length * 2),
-        1
+      CenterLine(
+        [
+          Style([Effect.bold, Effect.underlined]),
+          Text(title),
+          Style([Effect.underlineOff]),
+        ],
+        innerWidth
       ),
       2,
       true
     );
   }
 
-  void showErrorMessage(String message, [int displayTime = 5]) async {
+  void showDebug(String message, [int displayTime = 5]) async {
     _printInBorder(
-      Text(
-        message,
-        terminal.width - (border.length * 2 * printItem.length),
-        1
+      CenterLine(
+        [
+          Text(message)
+        ],
+        innerWidth,
       ),
       3,
       true
@@ -319,42 +313,54 @@ class Screen {
 
     await Future.delayed(Duration(seconds: displayTime));
 
+    _clearInBorder(1, true);
+  }
+
+  void showErrorMessage(String message, [int displayTime = 5]) async {
     _printInBorder(
-      Text(
-        '',
-        terminal.width - (border.length * 2 * printItem.length),
-        1
+      CenterLine(
+        [
+          Text(message)
+        ],
+        innerWidth
       ),
       3,
       true
     );
+
+    await Future.delayed(Duration(seconds: displayTime));
+
+    _clearInBorder(3, true);
   }
 
-  void _printInBorder(Text message, int level, bool top) {
-    int y = top? level : terminal.height - level + 1;
+  /// clears the border in level and return the line level to do it at
+  int _clearInBorder(int level, bool top) {
+    int y = top? level : terminal.height - (level - 1);
     
     terminal
+    ..moveCursor(
+      borderWidth + 1,
+      y
+    )
+    ..print(
+      Ansi.construct(border[level]!) + ' ' * (innerWidth - (2 * level)),
+      newLine: false
+    );
+
+    return y;
+  }
+
+  void _printInBorder(Line message, int level, bool top) {
+    int y =_clearInBorder(level, top);
+
+    terminal
       ..moveCursor(
-        (level * printItem.length * 2) + 1,
-        y
-      )
-      ..print(
-        border[level - 1] + ' ' * (terminal.width - (printItem.length * 2 * (level + 1))),
-        newLine: false
-      )
-      ..moveCursor(
-        (terminal.width ~/ 2) - (message.lines.first.length ~/ 2),
-        y
+        border.length * printItem.length,
+        y 
       ) 
       ..print(
-        border[level - 1] + message.lines.first,
-        effects: [
-          {
-            1: Colour.foregroundBlack,
-            2: Colour.foregroundWhite,
-            3: Colour.foregroundRed,
-          }[level]!
-        ],
+        message.render(),
+        effects: Settings.borderForegroundEffects[level]! + border[level]!,
         newLine: false
       );
   }
