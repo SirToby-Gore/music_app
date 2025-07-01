@@ -1,9 +1,15 @@
 import 'package:rich_stdout/rich_stdout.dart';
-
+/// A class representing a single line of text
 class Text {
+  /// The text to be displayed
   String text;
+
+  /// The length of the text
   int length = 0;
 
+  /// Create a new Text object
+  ///
+  /// [whitespaceLeft] and [whitespaceRight] are optional and default to 0
   Text(this.text, {int whitespaceLeft = 0, int whitespaceRight = 0}) {
     text = '${' ' * whitespaceLeft}$text';
     text = '$text${' ' * whitespaceRight}';
@@ -12,25 +18,51 @@ class Text {
   }
 }
 
+/// A class that wraps a [Text] object and applies styles to it
 class Style extends Text {
+  /// Create a new Style object
+  ///
+  /// [styles] is a list of [Effect]s to be applied to the text
   Style(List<int> styles) : super(Ansi.construct(styles)) {
     length = 0;
   }
 }
 
+/// A class that resets the text style
 class ResetStyle extends Style {
   ResetStyle() : super([Effect.reset]);
 }
 
+/// A class representing a line of text
 class Line {
+  /// The list of [Text] objects that make up the line
   List<Text> line;
+
+  /// The length of the line
   int length = 0;
+
+  /// The maximum length of the line
   int maxLength;
+
+  /// The amount of whitespace to the left of the line
   int whitespaceLeft;
+
+  /// The amount of whitespace to the right of the line
   int whitespaceRight;
+
+  /// The string to be rendered at the beginning of the line
   String beginningString; // New optional argument
+
+  /// The string to be rendered at the end of the line
   String endingString; // New optional argument
 
+  /// Create a new Line object
+  ///
+  /// [maxLength] is the maximum length of the line
+  ///
+  /// [whitespaceLeft] and [whitespaceRight] are optional and default to 0
+  ///
+  /// [beginningString] and [endingString] are optional and default to empty strings
   Line(
     this.line,
     this.maxLength, {
@@ -50,6 +82,7 @@ class Line {
     length = _getLengthTotal() + beginningString.length + endingString.length;
   }
 
+  /// Get the total length of the line
   int _getLengthTotal() {
     int sum = whitespaceLeft + whitespaceRight;
 
@@ -62,6 +95,7 @@ class Line {
     return sum;
   }
 
+  /// Render the line as a string
   String render() {
     String renderedLineContent = line.map(
       (line) => line.text,
@@ -71,12 +105,19 @@ class Line {
     renderedLineContent =
         '${' ' * whitespaceLeft}$renderedLineContent${' ' * whitespaceRight}';
 
-    // Add beginning and ending strings
     return '$beginningString$renderedLineContent$endingString';
   }
 }
 
+/// A class that centers a line of text
 class CenterLine extends Line {
+  /// Create a new CenterLine object
+  ///
+  /// [maxLength] is the maximum length of the line
+  ///
+  /// [whitespaceLeft] and [whitespaceRight] are optional and default to 0
+  ///
+  /// [beginningString] and [endingString] are optional and default to empty strings
   CenterLine(
     List<Text> line,
     int maxLength, {
@@ -106,7 +147,15 @@ class CenterLine extends Line {
   }
 }
 
+/// A class that aligns a line of text to the right
 class MaxLineRight extends Line {
+  /// Create a new MaxLineRight object
+  ///
+  /// [maxLength] is the maximum length of the line
+  ///
+  /// [whitespaceLeft] and [whitespaceRight] are optional and default to 0
+  ///
+  /// [beginningString] and [endingString] are optional and default to empty strings
   MaxLineRight(
     List<Text> line,
     int maxLength, {
@@ -132,7 +181,15 @@ class MaxLineRight extends Line {
   }
 }
 
+/// A class that aligns a line of text to the left
 class MaxLineLeft extends Line {
+  /// Create a new MaxLineLeft object
+  ///
+  /// [maxLength] is the maximum length of the line
+  ///
+  /// [whitespaceLeft] and [whitespaceRight] are optional and default to 0
+  ///
+  /// [beginningString] and [endingString] are optional and default to empty strings
   MaxLineLeft(
     List<Text> line,
     int maxLength, {
@@ -158,11 +215,22 @@ class MaxLineLeft extends Line {
   }
 }
 
+/// A class representing a paragraph of text
 class Paragraph {
+  /// The list of [Line] objects that make up the paragraph
   List<Line> lines;
+
+  /// The maximum height of the paragraph
   int maxHeight;
+
+  /// The length of the paragraph
   int length = 0;
 
+  /// Create a new Paragraph object
+  ///
+  /// [maxHeight] is the maximum height of the paragraph
+  ///
+  /// [whitespaceTop] and [whitespaceBottom] are optional and default to 0
   Paragraph(this.lines, this.maxHeight,
       {int whitespaceTop = 0, int whitespaceBottom = 0}) {
     if (lines.isEmpty) {
@@ -180,10 +248,12 @@ class Paragraph {
 
       lines = [
         ...List.generate(
-            whitespaceTop, (_) => Line([Text('')], lines.first.maxLength)),
+          whitespaceTop, (_) => CenterLine([Text('')], lines.first.maxLength)
+        ),
         ...lines,
         ...List.generate(
-            whitespaceBottom, (_) => Line([Text('')], lines.first.maxLength)),
+          whitespaceBottom, (_) => CenterLine([Text('')], lines.first.maxLength)
+        ),
       ];
     }
 
@@ -191,9 +261,14 @@ class Paragraph {
   }
 }
 
+/// A class that centers a paragraph of text
 class CenterParagraph extends Paragraph {
+  /// Create a new CenterParagraph object
+  ///
+  /// [maxHeight] is the maximum height of the paragraph
   CenterParagraph(super.lines, super.maxHeight)
-      : super(
-            whitespaceTop: (maxHeight - lines.length) ~/ 2,
-            whitespaceBottom: (maxHeight - lines.length) ~/ 2);
+  : super(
+    whitespaceTop: (maxHeight - lines.length) ~/ 2,
+    whitespaceBottom: (maxHeight - lines.length) ~/ 2
+  );
 }

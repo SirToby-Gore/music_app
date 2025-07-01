@@ -1,10 +1,19 @@
+import 'dart:math';
+import 'dart:io';
 import 'package:music_app/text.dart';
 import 'package:rich_stdout/rich_stdout.dart';
 import 'package:music_app/mp3.dart';
 import 'package:music_app/settings.dart';
-import 'dart:math';
-import 'dart:io';
 
+/// A class to manage the screen.
+///
+/// This class holds the screen's terminal instance and dimensions.
+///
+/// The class provides methods to draw the screen border, display text and
+/// menus, and show the current playing song.
+///
+/// The class also provides methods to clear the screen and show the play
+/// controls.
 class Screen {
   final Terminal terminal = Terminal();
   final String resetStyle = Ansi.construct([Effect.reset]);
@@ -32,6 +41,15 @@ class Screen {
     _startShowPlaying();
   }
 
+  /// Initializes the screen for the application.
+  ///
+  /// This method hides the cursor, calculates the dimensions of the screen,
+  /// and sets up the initial border and content. It creates a grid of strings
+  /// representing the screen, with each cell containing either a border character
+  /// or a content character. The border is drawn based on the specified settings.
+  ///
+  /// It then displays a welcome message on the screen for a duration specified
+  /// in the settings.
   void startUp() {
     terminal.hideCursor();
     
@@ -83,8 +101,27 @@ class Screen {
     );
 
     writeTextFromCorner(titleScreenText);
-  }
 
+    sleep(Settings.titleAndExitScreenDuration);
+  }
+  
+  /// Draws a border around the screen.
+  ///
+  /// This function draws a border with the style of the border defined by
+  /// [Settings.borderStyle].
+  ///
+  /// It can also display a song title in the top left corner by providing a song
+  /// object. The song's title is displayed with the style of
+  /// [Settings.titleStyle].
+  ///
+  /// The border is drawn with a spiral traversal and the drawing is delayed by
+  /// [startDelay] seconds.
+  ///
+  /// Parameters:
+  /// - `song`: An optional song to display its title in the top left corner.
+  /// - `title`: An optional title to display in the top left corner. If present,
+  ///            the `song` object is ignored.
+  /// - `startDelay`: The delay in seconds before drawing the border. Defaults to 6.
   void drawBorder({MP3? song, String? title, int startDelay = 6}) {
     if (startDelay > 0) {
       Random random = Random();
@@ -119,13 +156,27 @@ class Screen {
     _showPlayState();
   }
 
-  /// this was vibe coded, know idea how it works, it just does
+  /// A method to traverse a matrix in a spiral order.
+  ///
+  /// This method is based on the [Spiral Matrix] algorithm.
+  ///
+  /// The traversal starts from the top left corner and goes in a spiral order outwards.
+  ///
+  /// The method takes a callback function that is called on each item in the matrix.
+  /// The callback function takes three parameters: the item, the row of the item, and the column of the item.
+  ///
+  /// The method traverses the matrix in layers, starting from the top left corner.
+  /// Each layer is traversed in the order of right, down, left, up.
+  ///
+  /// The method stops traversing the matrix when the top row and the left column
+  /// have been traversed.
+  ///
+  /// [Spiral Matrix]: https://en.wikipedia.org/wiki/Spiral_matrix
   void spiralTraverseAndApply<T>(
       List<List<T>> matrix,
       Function(T item, int row, int col) callback
     ) {
       if (matrix.isEmpty || matrix[0].isEmpty) {
-        // Handle empty matrix or empty rows gracefully
         return;
       }
 
@@ -169,7 +220,15 @@ class Screen {
         layers++; // Increment the layer count
       }
     }
-
+  
+  /// Writes the text from the corner of the screen.
+  ///
+  /// The text is written in the area defined by the [innerWidth] and [innerHeight]
+  /// properties. The text is centred in this area.
+  ///
+  /// The text is written starting from the top left corner of the area.
+  ///
+  /// The method does not clear the screen before writing the text.
   void writeTextFromCorner(Paragraph text) {
     final int cursorColumnStart = (borderWidth ~/ 2) + 1;
 
@@ -195,7 +254,17 @@ class Screen {
 
     terminal.moveCursor(0, terminal.height); // moves the cursor to the bottom
   }
-
+  
+  /// Shows a list of commands on the screen.
+  ///
+  /// The commands are a list of strings. Each string is a command that can be
+  /// entered by the user. The commands are displayed on the screen in a single
+  /// line, separated by spaces.
+  ///
+  /// The method writes the commands in the area defined by the [innerWidth] and
+  /// [innerHeight] properties. The text is centred in this area.
+  ///
+  /// The method does not clear the screen before writing the text.
   void showCommands(List<String> commands) {
     _printInBorder(
       CenterLine(
@@ -207,10 +276,29 @@ class Screen {
     );
   }
 
+  /// Shows the currently playing song.
+  ///
+  /// The method displays the song title in the area defined by the [innerWidth]
+  /// and [innerHeight] properties. The text is centred in this area.
+  ///
+  /// The method does not clear the screen before writing the text.
+  ///
+  /// If [song] is not provided, the currently playing song is determined by the
+  /// [currentSong] property.
+  ///
+  /// The method does not update the [currentSong] property.
   void showPlaying([MP3? song]) {
     currentSong = song;
   }
-
+  
+  /// Updates the play state of the screen.
+  ///
+  /// The method displays the play state in the area defined by the [innerWidth]
+  /// and [innerHeight] properties. The text is centred in this area.
+  ///
+  /// The method does not clear the screen before writing the text.
+  ///
+  /// The method does not update the [currentSong] property.
   void _showPlayState() async {
     Line line = CenterLine([Text('<no song playing>')], innerWidth);
 
@@ -247,6 +335,7 @@ class Screen {
             currentSong!.metaData.title ?? '',
             '-',
             currentSong!.metaData.artist ?? '',
+            printItem,
           ].join(' ')),
           ...playBar
         ],
@@ -261,6 +350,13 @@ class Screen {
     );
   }
 
+  /// Starts a loop that periodically updates the playing song display.
+  ///
+  /// The loop updates the display every second until the loop is stopped.
+  /// The loop does not stop by itself and must be stopped manually.
+  ///
+  /// The loop is intended to be used with the [showPlaying] method to periodically
+  /// update the display with the current playing song.
   void _startShowPlaying() async {
     while (true) {
       _showPlayState();
@@ -269,6 +365,16 @@ class Screen {
     }
   }
 
+  /// Shows the play controls on the screen.
+  ///
+  /// The play controls are the commands that can be used to control the playback
+  /// of songs. The play controls are displayed on the screen in a single line,
+  /// separated by spaces.
+  ///
+  /// The method is intended to be used with the [showPlaying] method to periodically
+  /// update the display with the current playing song.
+  ///
+  /// The method does not clear the screen before writing the text.
   void showPlayControls() {
     _printInBorder(
       CenterLine(
@@ -283,7 +389,15 @@ class Screen {
       false,
     );
   }
-
+  
+  /// Shows the title of the music app on the screen.
+  ///
+  /// The title is displayed with an underline style and centred on the screen.
+  ///
+  /// The method does not clear the screen before writing the text.
+  ///
+  /// Parameters:
+  /// - `title`: The title of the music app to be displayed.
   void showTitle(String title) {
     _printInBorder(
       CenterLine(
@@ -299,6 +413,16 @@ class Screen {
     );
   }
 
+  /// Displays a debug message on the screen for a specified duration.
+  ///
+  /// The message is displayed in the area defined by the [innerWidth] property
+  /// and is centred within this area. The message will be cleared after the
+  /// specified display time.
+  ///
+  /// Parameters:
+  /// - `message`: The debug message to display.
+  /// - `displayTime`: The duration, in seconds, for which the message should be
+  ///   displayed. Defaults to 5 seconds.
   void showDebug(String message, [int displayTime = 5]) async {
     _printInBorder(
       CenterLine(
@@ -315,7 +439,16 @@ class Screen {
 
     _clearInBorder(1, true);
   }
-
+  /// Displays an error message on the screen for a specified duration.
+  ///
+  /// The message is displayed in the area defined by the [innerWidth] property
+  /// and is centred within this area. The message will be cleared after the
+  /// specified display time.
+  ///
+  /// Parameters:
+  /// - `message`: The error message to display.
+  /// - `displayTime`: The duration, in seconds, for which the message should be
+  ///   displayed. Defaults to 5 seconds.
   void showErrorMessage(String message, [int displayTime = 5]) async {
     _printInBorder(
       CenterLine(
@@ -333,7 +466,16 @@ class Screen {
     _clearInBorder(3, true);
   }
 
-  /// clears the border in level and return the line level to do it at
+  /// Clears a border level and returns the line level at which it was cleared.
+  ///
+  /// The border level is cleared in the area defined by the [innerWidth] property
+  /// and is centred within this area.
+  ///
+  /// Parameters:
+  /// - `level`: The border level to clear.
+  /// - `top`: Whether to clear the top (`true`) or bottom (`false`) border.
+  ///
+  /// Returns: The line level at which the border was cleared.
   int _clearInBorder(int level, bool top) {
     int y = top? level : terminal.height - (level - 1);
     
@@ -350,6 +492,16 @@ class Screen {
     return y;
   }
 
+  /// Prints a [Line] in the border at the specified level and y offset.
+  ///
+  /// The [Line] is printed in the area defined by the [innerWidth] property
+  /// and is centred within this area.
+  ///
+  /// Parameters:
+  /// - `message`: The line to print.
+  /// - `level`: The border level to print at.
+  /// - `top`: Whether to print at the top (`true`) or bottom (`false`) of the
+  ///   border.
   void _printInBorder(Line message, int level, bool top) {
     int y =_clearInBorder(level, top);
 

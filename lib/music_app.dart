@@ -2,6 +2,13 @@ import 'package:music_app/screen.dart';
 import 'package:music_app/menu.dart';
 import 'package:music_app/play_manager.dart';
 
+/// A class to manage the music application.
+///
+/// This class holds all the music app's components such as the screen and the menu.
+///
+/// The application is started by calling [startUp].
+///
+/// The class provides methods to list options (songs) and to start the menu.
 class MusicApp {
   static final Screen screen = Screen();
   final playManager = PlayManager(screen);
@@ -31,10 +38,19 @@ class MusicApp {
     menu.playManager = playManager;
   }
 
-  void startUp() {
-    screen.startUp();   
-  }
-
+  
+  /// A wrapper function for [Menu.listOptions].
+  ///
+  /// This function wraps [Menu.listOptions] and provides default values for the parameters.
+  ///
+  /// The default values are:
+  /// - `numberOfItemsToShow`: [defaultNumberOfItemsToShow]
+  /// - `title`: [defaultTitle]
+  /// - `titleSpace`: [defaultTitleSpace]
+  /// - `indentOnItems`: [defaultIndentOnItems]
+  /// - `extraIndentOnSelected`: [defaultExtraIndentOnSelected]
+  /// - `endListenerOnSelection`: [defaultEndListenerOnSelection]
+  /// - `defaultIndex`: [defaultDefaultIndex]
   void listOptions(
     Map<String, Function> options,
     {

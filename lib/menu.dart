@@ -8,6 +8,18 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:io';
 
+/// Characters used in the menu system
+///
+/// These are all the characters used for the menu system
+///
+/// The characters are used to define the different types of characters
+/// that can be pressed in the menu system
+///
+/// The characters are used in the [Menu] class to define the different
+/// types of characters that can be pressed in the menu system
+///
+/// The characters are used in the [Menu] class to define the different
+/// types of characters that can be pressed in the menu system
 enum Character {
   newLine,
   escape,
@@ -130,6 +142,17 @@ enum Character {
   unknown,
 }
 
+/// A class to manage a menu.
+///
+/// This class holds the different options and there actions.
+///
+/// The menu is displayed on the screen and the user can navigate
+/// up and down the menu and select an option.
+///
+/// The menu is an infinite loop until the user selects an option
+/// that stops the menu.
+///
+/// The class provides methods to add options and to start the menu.
 class Menu {
   int width;
   int height;
@@ -142,7 +165,7 @@ class Menu {
   final List<Map<String, Function>> _options = [{}];
   final List<int> _numberOfItemsToShow = [5];
   final List<String?> _title = [null];
-  final List<int> _titleSpace = [1];
+  final List<int> _titleSpace = [0];
   final List<int> _indentOnItems = [0];
   final List<int> _extraIndentOnSelected = [0];
   final List<bool> _endListenerOnSelection = [true];
@@ -294,6 +317,20 @@ class Menu {
     }); 
   }
 
+  /// Displays a list of options in the menu.
+  ///
+  /// This function adds a new set of options to the menu and displays them
+  /// on the screen. The user can navigate through the options and make a selection.
+  ///
+  /// Parameters:
+  /// - `options`: A map of option labels to their corresponding actions (functions).
+  /// - `numberOfItemsToShow`: The number of options to display at once. Must be odd and within the screen's height.
+  /// - `title`: An optional title for the menu.
+  /// - `titleSpace`: Space between the title and the options.
+  /// - `indentOnItems`: Indentation for each option item.
+  /// - `extraIndentOnSelected`: Additional indentation for the currently selected item.
+  /// - `endListenerOnSelection`: Determines whether the menu listener should stop after a selection.
+  /// - `defaultIndex`: The default selected index when the options are first displayed.
   void listOptions(
     Map<String, Function> options,
     {
@@ -321,6 +358,15 @@ class Menu {
     showCurrentMenu();
   }
 
+  
+  /// Shows the current menu to the user.
+  ///
+  /// This function is private and should not be called directly.
+  ///
+  /// It displays the current menu to the user, with the selected item
+  /// highlighted. The user can navigate through the options and make a selection.
+  ///
+  /// The menu is centred in the screen both horizontally and vertically.
   void showCurrentMenu() {
     if (_numberOfItemsToShow.last.isEven) {
       screen.terminal.error('number of items to show must be odd ${_numberOfItemsToShow.last} is even');
@@ -356,23 +402,7 @@ class Menu {
       screen.innerHeight
     );
 
-    rows.lines.insert(
-      0,
-      Line(
-        [
-          Text('┌${'─' * (screen.innerWidth - 2)}┐')
-        ],
-        screen.innerWidth
-      )
-    );
-    rows.lines.add(Line(
-      [
-        Text('└${'─' * (screen.innerWidth - 2)}┘')
-      ],
-      screen.innerWidth
-    ));
-
-    rows.lines[midWayItem + 1] = MaxLineRight(
+    rows.lines[midWayItem] = MaxLineRight(
       [
         Text('━' * ((_indentOnItems.last + _extraIndentOnSelected.last) - 1)),
         Style([Colour.backgroundWhite, Colour.foregroundBlack]),
@@ -390,6 +420,23 @@ class Menu {
       beginningString: '┝',
       endingString: '│',
     );
+
+    rows.lines
+      ..insert(
+        0,
+        Line(
+          [
+            Text('┌${'─' * (screen.innerWidth - 2)}┐')
+          ],
+          screen.innerWidth
+        )
+      )
+      ..add(Line(
+        [
+          Text('└${'─' * (screen.innerWidth - 2)}┘')
+        ],
+        screen.innerWidth
+      ));
 
     if (_title.last != null) {
       screen.showDebug('adding white space and title...');
@@ -421,16 +468,43 @@ class Menu {
     screen.writeTextFromCorner(rows);
   }
 
-  String? getAtIndexOrNull(Iterable<String> list, int index){
-    if (index > list.length - 1) {
-      return null;
-    }
-    if (index < 0) {
+  /// Returns the element at the specified index in the list, or null if the index is out of bounds.
+  ///
+  /// The list is expected to be an iterable of type T. The function checks if the index is within
+  /// the bounds of the list and returns the element at the specified index if it exists. 
+  /// If the index is out of bounds (either negative or greater than the list length), 
+  /// it returns null.
+  ///
+  /// - Parameters:
+  ///   - list: An iterable of type T.
+  ///   - index: The index of the element to retrieve.
+  /// - Returns: The element at the specified index, or null if the index is out of bounds.
+  T? getAtIndexOrNull<T>(Iterable<T> list, int index) {
+    if (index > list.length - 1 || index < 0) {
       return null;
     }
     return list.elementAt(index);
   }
 
+  /// A utility method to get a character from a list of character codes.
+  ///
+  /// It takes a list of character codes and returns the corresponding character.
+  /// If the list is not a valid character code, it returns null.
+  ///
+  /// The list is expected to be a list of integers, where each integer represents
+  /// the character code of the character. The list is expected to be a single
+  /// character, if the list is longer than one element, it will return null.
+  ///
+  /// The following character codes are supported:
+  /// - control characters: 10 (new line), 27 (escape), 32 (space)
+  /// - punctuation: 33 (!), 34 (double quote), 35 (#), 36 ($), 37 (%), 38 (&),
+  ///                39 (single quote), 40 (open bracket), 41 (close bracket),
+  ///                42 (*), 43 (+)
+  /// - other characters: other characters will be returned as null.
+  ///
+  /// - Parameters:
+  ///   - data: A list of character codes.
+  /// - Returns: The character corresponding to the list of character codes, or null if the list is not a valid character code.
   Character getCharFromCode(List<int> data) {
     switch (data) {
       // control characters
@@ -671,6 +745,20 @@ class Menu {
     }
   }
 
+  /// Exits the menu and performs necessary clean up.
+  ///
+  /// This asynchronous function cancels any active subscriptions,
+  /// displays a goodbye message, stops any currently playing song,
+  /// clears the terminal, and restores terminal modes if applicable. 
+  /// Finally, it exits the application.
+  ///
+  /// Note: The terminal modes restoration will only occur if the
+  /// standard input still has a terminal associated with it.
+  ///
+  /// If debug mode is enabled, detailed debug messages about terminal 
+  /// modes are printed.
+  ///
+  /// The function will terminate the program with an exit code of 0.
   void exitMenu() async {
     subscription?.cancel();
     subscription = null;
@@ -683,7 +771,7 @@ class Menu {
       screen.innerHeight
     ));
 
-    await Future.delayed(Duration(seconds: 1));
+    sleep(Settings.titleAndExitScreenDuration);
 
     await playManager?.currentSong?.stop();
 

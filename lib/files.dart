@@ -2,6 +2,16 @@ import 'package:music_app/globals.dart' as globals;
 import 'package:music_app/mp3.dart';
 import 'dart:io';
 
+/// A class to manage the user's music folder.
+///
+/// This class holds the music folder location and its contents.
+///
+/// The folder is scanned for subfolders and their contents on construction.
+/// The subfolders are treated as artists and each subfolder file is treated as a song.
+/// e.g. `~/music/keane/hopes and fears/bend and brake.mp3`
+/// The songs are sorted by track number.
+///
+/// The class provides a method to get all songs and all albums.
 class MusicFolder {
   Directory musicDir = Directory('/');
   List<Artist> artists = [];
@@ -34,6 +44,10 @@ class MusicFolder {
     ).toList();
   }
 
+  
+  /// Returns a list of all songs in the music folder.
+  ///
+  /// The list is sorted alphabetically by song title.
   List<MP3> getAllSongs() {
     List<MP3> songs = [];
 
@@ -48,6 +62,9 @@ class MusicFolder {
     );
   }
 
+  /// Returns a list of all albums in the music folder.
+  ///
+  /// The list is sorted first by artist name and then by album name.
   List<Album> getAllAlbums() {
     List<Album> albums = [];
 
@@ -63,6 +80,14 @@ class MusicFolder {
   }
 }
 
+  /// A class to manage an artist's music folder.
+  ///
+  /// This class holds the artist folder location and its contents.
+  ///
+  /// The folder is scanned for subfolders and their contents on construction.
+  /// The subfolders are treated as albums and each subfolder file is treated as a song.
+  /// e.g. `~/music/keane/hopes and fears/bend and brake.mp3`
+  /// The songs are sorted by track number.
 class Artist {
   List<Album> albums = [];
   String name = '<Unknown>';
@@ -79,6 +104,12 @@ class Artist {
   }
 }
 
+  /// A class to manage an album.
+  ///
+  /// This class holds the album location and its contents.
+  ///
+  /// The folder is scanned for files and their contents on construction.
+  /// The files are treated as songs and sorted by track number.
 class Album {
   List<MP3> songs = [];
   String name = '<Unknown>';
