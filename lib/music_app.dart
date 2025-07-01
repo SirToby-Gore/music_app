@@ -62,8 +62,6 @@ class MusicApp {
       bool? endListenerOnSelection,
       int? defaultIndex,
     }) {
-      screen.showDebug('options listing...');
-      
       menu.listOptions(
         options,
         numberOfItemsToShow: numberOfItemsToShow ?? defaultNumberOfItemsToShow,
@@ -74,7 +72,5 @@ class MusicApp {
         endListenerOnSelection: endListenerOnSelection ?? defaultEndListenerOnSelection,
         defaultIndex: defaultIndex ?? defaultDefaultIndex,
       );
-
-      screen.showDebug('options now visible');
     }
 }

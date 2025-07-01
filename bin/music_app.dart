@@ -1,6 +1,7 @@
 import 'package:music_app/mp3.dart';
 import 'package:music_app/music_app.dart';
 import 'package:music_app/files.dart';
+import 'package:music_app/settings.dart';
 
 dynamic defaultKey(MapEntry<String, Function> entry) => entry.key;
 
@@ -249,7 +250,7 @@ void main(List<String> arguments) {
   }();
   
   final app = MusicApp(
-    defaultIndentOnItems: 1,
+    defaultIndentOnItems: Settings.indentOnItems,
     defaultNumberOfItemsToShow: maxItems,
   );
 

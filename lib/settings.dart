@@ -1,6 +1,8 @@
 import 'package:rich_stdout/rich_stdout.dart';
 /// This class contains all the settings for the application.
 ///
+/// [indentOnItems] is the indentation for each option item in the menu.
+/// 
 /// [titleAndExitScreenDuration] is the duration for which the title and exit screens are displayed.
 ///
 /// [borderBackgroundEffects] is a map of border levels to their corresponding background effects. The keys are the border levels, and the values are lists of background effects to use for that level.
@@ -13,6 +15,8 @@ import 'package:rich_stdout/rich_stdout.dart';
 ///
 /// [exitText] is a list of strings representing the text to display on the exit screen.
 class Settings {
+  static const indentOnItems = 1;
+
   static Duration titleAndExitScreenDuration = const Duration(seconds: 1);
 
   static Map<int, List<int>> borderBackgroundEffects = {

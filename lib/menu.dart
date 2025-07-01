@@ -439,8 +439,6 @@ class Menu {
       ));
 
     if (_title.last != null) {
-      screen.showDebug('adding white space and title...');
-      
       rows.lines.insert(
         0,
         MaxLineRight(
@@ -461,8 +459,6 @@ class Menu {
           ..insert(1, whiteSpace)
           ..insert(0, whiteSpace);
       }
-
-      screen.showDebug('added white space and title');
     }
 
     screen.writeTextFromCorner(rows);
