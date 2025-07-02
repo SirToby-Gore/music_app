@@ -1,18 +1,20 @@
-import 'package:music_app/globals.dart' as globals;
-import 'package:music_app/mp3.dart';
-import 'dart:io';
+import globals
+import mp3
 
-/// A class to manage the user's music folder.
-///
-/// This class holds the music folder location and its contents.
-///
-/// The folder is scanned for subfolders and their contents on construction.
-/// The subfolders are treated as artists and each subfolder file is treated as a song.
-/// e.g. `~/music/keane/hopes and fears/bend and brake.mp3`
-/// The songs are sorted by track number.
-///
-/// The class provides a method to get all songs and all albums.
-class MusicFolder {
+class MusicFolder:
+  """
+  A class to manage the user's music folder.
+
+  This class holds the music folder location and its contents.
+
+  The folder is scanned for subfolders and their contents on construction.
+  The subfolders are treated as artists and each subfolder file is treated as a song.
+  e.g. `~/music/keane/hopes and fears/bend and brake.mp3`
+  The songs are sorted by track number.
+
+  The class provides a method to get all songs and all albums.
+  """
+  
   Directory musicDir = Directory('/');
   List<Artist> artists = [];
   

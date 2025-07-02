@@ -171,11 +171,11 @@ class Menu {
   final List<bool> _endListenerOnSelection = [true];
 
   Menu(this.width, this.height, this.screen, {this.debug = false}) {
-    if (globals.menuInitialised) {
+    if (globals.menu_initialised) {
       screen.terminal.error('Menu object already initialised');
       throw Error();
     } else {
-      globals.menuInitialised = true;
+      globals.menu_initialised = true;
     }
 
     if (stdin.hasTerminal) {

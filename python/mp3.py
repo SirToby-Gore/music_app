@@ -1,33 +1,39 @@
-import 'package:audio_metadata_reader/audio_metadata_reader.dart';
-import 'dart:io';
+import tinytag
+from enum import Enum
 
-/// Status codes for the MP3 class
-///
-/// [failure] - there was an error with the file
-/// [warning] - there was a warning with the file
-/// [success] - the file was processed successfully
-enum MP3StatusCode {
-  failure,
-  warning,
-  success,
-}
+class MP3StatusCode(Enum):
+  """
+  Status codes for the MP3 class
 
-/// A class representing an MP3 file
-///
-/// This class holds the MP3 file location and its metadata.
-///
-/// The file is scanned for metadata on construction.
-/// The metadata is stored in the [metaData] field.
-///
-/// The class provides methods to play, pause, stop, resume and restart the MP3 file.
-///
-/// The class also provides methods to get the current elapsed time and the total duration of the MP3 file.
-class MP3 {
-  File file = File('');
-  bool playing = false;
-  bool open = false;
-  bool muted = false;
-  int elapsedEstimate = 0;
+  [failure] - there was an error with the file
+  [warning] - there was a warning with the file
+  [success] - the file was processed successfully
+  """
+
+  failure = 0
+  warning = 1
+  success = 2
+
+
+class MP3:
+  """
+  A class representing an MP3 file
+
+  This class holds the MP3 file location and its metadata.
+
+  The file is scanned for metadata on construction.
+  The metadata is stored in the [metaData] field.
+
+  The class provides methods to play, pause, stop, resume and restart the MP3 file.
+
+  The class also provides methods to get the current elapsed time and the total duration of the MP3 file.
+  """
+
+  file: File = File('')
+  playing: bool = False
+  open: bool = False
+  muted: bool = False
+  elapsedEstimate: int = 0
 
   AudioMetadata metaData = AudioMetadata(file: File(''));
   
