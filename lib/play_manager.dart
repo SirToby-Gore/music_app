@@ -12,7 +12,7 @@ import 'package:music_app/screen.dart';
 class PlayManager {
   List<MP3> playQueue = [];
   final MusicFolder musicFolder = MusicFolder();
-  MP3? currentSong;
+  int currentSongPointer = 0;
 
   Screen screen;
 
@@ -25,51 +25,85 @@ class PlayManager {
     playQueue.add(song);
   }
 
-  /// Starts playing songs from the play queue sequentially.
-  ///
-  /// It stops the current song, updates the current song from the queue,
-  /// and waits for its duration to complete before moving to the next song.
   void startPlayQueue() async {
-    while (playQueue.isNotEmpty) {
-      await currentSong?.stop();
-      sleep(const Duration(milliseconds: 50));
+    if (currentSongPointer >= playQueue.length) {
+      return;
+    }
 
-      currentSong = playQueue.first;
-      playQueue.removeAt(0);
-
-      changeCurrentSong(currentSong!);
-
-      while ((currentSong?.elapsedEstimate ?? double.infinity) < (currentSong?.metaData.duration?.inSeconds ?? 0)) {
+    screen.currentSong = playQueue[currentSongPointer];
+    screen.currentSong!.start();
+    
+    while (currentSongPointer < playQueue.length) {
+      while ((screen.currentSong?.elapsedEstimate ?? double.infinity) < (screen.currentSong?.metaData.duration?.inSeconds ?? 0)) {
         await Future.delayed(const Duration(seconds: 1));
       }
 
       await Future.delayed(const Duration(seconds: 1));
+      nextSong();
     }
+  }
+
+  void nextSong() async {
+    await screen.currentSong?.stop();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    screen.currentSong = null;
+
+    currentSongPointer++;
+
+    if (currentSongPointer == playQueue.length) {
+      currentSongPointer--;
+      return;
+    }
+
+    screen.currentSong = playQueue[currentSongPointer];
+
+    screen.currentSong!.start();
+  }
+
+  void previousSong() async {
+    await screen.currentSong?.stop();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    screen.currentSong = null;
+
+    currentSongPointer--;
+
+    if (currentSongPointer < 0) {
+      currentSongPointer++;
+      return;
+    }
+
+    screen.currentSong = playQueue[currentSongPointer];
+
+    screen.currentSong!.start();
   }
 
   /// Pauses the song that is currently at the front of the play queue.
   void pausePlayQueue() async {
-    await playQueue.firstOrNull?.pause();
+    await screen.currentSong?.pause();
   }
 
   /// Stops the song that is currently at the front of the play queue.
   void stopPlayQueue() async {
-    await playQueue.firstOrNull?.stop();
+    await screen.currentSong?.stop();
   }
 
   /// Resumes the song that is currently at the front of the play queue.
   void resumePlayQueue() async {
-    playQueue.firstOrNull?.resume();
+    screen.currentSong?.resume();
   }
 
   /// Replaces the current play queue with a new one and starts playback.
   ///
   /// [playQueue] is the new list of MP3 objects to be played.
-  void newPlayQueue(List<MP3> playQueue) async {
+  void newPlayQueue(List<MP3> newPlayQueue) async {
     stopPlayQueue();
-    await currentSong?.stop();
+    await screen.currentSong?.stop();
 
-    this.playQueue = playQueue;
+    currentSongPointer = 0;
+
+    playQueue = newPlayQueue;
 
     startPlayQueue();
   }
@@ -78,16 +112,16 @@ class PlayManager {
   ///
   /// Displays an error message on the screen if the song fails to play.
   void changeCurrentSong(MP3 song) async {
-    await currentSong?.stop();
+    await screen.currentSong?.stop();
     sleep(const Duration(milliseconds: 50));
 
-    currentSong = song;
-    screen.showPlaying(currentSong);
+    screen.currentSong = song;
+    screen.showPlaying(screen.currentSong);
 
-    MP3StatusCode code = await currentSong!.start();
+    MP3StatusCode code = await screen.currentSong!.start();
 
     if (code == MP3StatusCode.failure) {
-      screen.showErrorMessage('Error playing - $currentSong');
+      screen.showErrorMessage('Error playing - ${screen.currentSong}');
     }
   }
 
@@ -111,5 +145,15 @@ class PlayManager {
     }
 
     return songs.toList();
+  }
+
+  Set<String> getAllGenres() {
+    Set<String> genres = {};
+
+    for (MP3 song in getAllSongs()) {
+      genres.addAll(song.metaData.genres);
+    }
+
+    return genres.where((String genre) => genre.isNotEmpty).toSet();
   }
 }

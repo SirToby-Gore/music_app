@@ -268,7 +268,7 @@ class Menu {
             showCurrentMenu();
 
             screen.drawBorder(
-              song: playManager?.currentSong,
+              song: playManager?.screen.currentSong,
               startDelay: 0,
               title: _title.last ?? ''
             );
@@ -277,36 +277,33 @@ class Menu {
           break;
         
         case Character.space:
-          if (playManager?.currentSong == null) {
+          if (playManager?.screen.currentSong == null) {
             break;
           }
 
-          if (playManager!.currentSong!.playing) {
-            playManager!.currentSong!.pause();
+          if (playManager!.screen.currentSong!.playing) {
+            playManager!.screen.currentSong!.pause();
           } else {
-            playManager!.currentSong!.resume();
+            playManager!.screen.currentSong!.resume();
           }
 
-          screen.showPlaying(playManager!.currentSong);
+          screen.showPlaying(playManager!.screen.currentSong);
 
           break;
         
         case Character.n:
-          if (playManager?.playQueue == null) {
-            break;
-          }
+          playManager!.nextSong();
 
-          if (playManager!.playQueue.length > 1) {
-            playManager?.currentSong?.stop();
-            // playManager!.playQueue.removeAt(0);
-            playManager!.startPlayQueue();
-          }
+          break;
+        
+        case Character.p:
+          playManager!.previousSong();
 
           break;
         
         case Character.r:
-          playManager?.currentSong?.restart();
-          screen.showPlaying(playManager?.currentSong);
+          playManager?.screen.currentSong?.restart();
+          screen.showPlaying(playManager?.screen.currentSong);
           break;
           
         default:
@@ -389,7 +386,7 @@ class Menu {
               Text(
                 getAtIndexOrNull(
                   _options.last.keys,
-                  index + _currentlySelected.last - midWayItem
+                  index + _currentlySelected.last - midWayItem + 1
                 ) ?? ''
               ),
             ],
@@ -402,7 +399,7 @@ class Menu {
       screen.innerHeight
     );
 
-    rows.lines[midWayItem] = MaxLineRight(
+    rows.lines[midWayItem - 1] = MaxLineRight(
       [
         Text('━' * ((_indentOnItems.last + _extraIndentOnSelected.last) - 1)),
         Style([Colour.backgroundWhite, Colour.foregroundBlack]),
@@ -769,7 +766,7 @@ class Menu {
 
     sleep(Settings.titleAndExitScreenDuration);
 
-    await playManager?.currentSong?.stop();
+    await playManager?.screen.currentSong?.stop();
 
     screen.terminal
       ..clear()

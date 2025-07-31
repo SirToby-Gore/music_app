@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:io';
+import 'package:music_app/play_manager.dart';
 import 'package:music_app/text.dart';
 import 'package:rich_stdout/rich_stdout.dart';
 import 'package:music_app/mp3.dart';
@@ -381,6 +382,7 @@ class Screen {
         [
           Text('space: play/pause  '),
           Text('n: next  '),
+          Text('p: previous  '),
           Text('r: restart song'),
         ],
         innerWidth,
@@ -439,6 +441,7 @@ class Screen {
 
     _clearInBorder(1, true);
   }
+
   /// Displays an error message on the screen for a specified duration.
   ///
   /// The message is displayed in the area defined by the [innerWidth] property

@@ -207,6 +207,61 @@ Map<String, Function> getAlbumOptions(MusicApp app) {
   );
 } 
 
+Map<String, Function> getGenreSubOption(MusicApp app, String genre) {
+  List<MP3> songsInGenre = app.playManager.getAllSongs().where((MP3 song) => song.metaData.genres.contains(genre)).toList();
+  
+  Map<String, Function> options = {
+    '<Play all>': () {
+      app.playManager.newPlayQueue(
+        songsInGenre..sort(
+          (song1, song2) {
+            int albumCompare = (song1.metaData.album ?? '').compareTo(song2.metaData.album ?? '');
+            if (albumCompare != 0) {
+              return albumCompare;
+            } else {
+              return (song1.metaData.trackNumber ?? 0).compareTo(song2.metaData.trackNumber ?? 0);
+            }
+          }
+        )
+      );
+    },
+    '<Shuffle all>': () {
+      app.playManager.newPlayQueue(songsInGenre..shuffle());
+    },
+  };
+
+  int unknownCounter = 0;
+
+  for (MP3 song in songsInGenre) {
+    options['${song.metaData.title ?? 'Unknown ${unknownCounter++}'} - ${song.metaData.artist ?? 'Unknown'}'] = () {
+      app.playManager.changeCurrentSong(song);
+    };
+  }
+
+  return sortMap(
+    options,
+    defaultKey
+  );
+}
+
+Map<String, Function> getGenreOptions(MusicApp app) {
+  Map<String, Function> genres = {};
+
+  for (String genre in app.playManager.getAllGenres()) {
+    genres[/*genre.isEmpty ? '<Uncategorised>' : */ genre] = () {
+      app.listOptions(
+        getGenreSubOption(app, genre),
+        title: genre
+      );
+    };
+  }
+  
+  return sortMap(
+    genres,
+    defaultKey
+  );
+}
+
 Map<String, Function> getRootOptions(MusicApp app) {
   return sortMap(
     {
@@ -228,6 +283,12 @@ Map<String, Function> getRootOptions(MusicApp app) {
             app
           ),
           title: 'Albums'
+        );
+      },
+      'Genres': () {
+        app.listOptions(
+          getGenreOptions(app),
+          title: 'Genres'
         );
       },
       '<Exit>': () {
